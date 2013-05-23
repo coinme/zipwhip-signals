@@ -24,6 +24,7 @@ Technologies
 * We store mail and subscriptions in Cassandra (providing active-active datacenter support)
 * JMS provides round-robin load balancing of data processing.
 * Zookeeper provides cluster-wide mutexes.
+* Zookeeper provides a global ordering of events.
 
 How clients subscribe
 ------
