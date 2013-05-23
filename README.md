@@ -42,8 +42,9 @@ Topology
 
 ```java
 /**
- * A global map of Address to Address subscriptions. For example, a ClientAddress can bind into a ChannelAddress. This
- * means that whenever a message is sent to the ChannelAddress, the ClientAddress will receive a copy.
+ * A global map of Address to Address subscriptions. For example, a ClientAddress can bind into a 
+ * ChannelAddress. This means that whenever a message is sent to the ChannelAddress, the ClientAddress
+ * will receive a copy.
  *
  * Here are the common use-cases:
  *   Client -> Server
