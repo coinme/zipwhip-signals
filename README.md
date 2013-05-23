@@ -16,6 +16,15 @@ What it does
 * It is active-active datacenter.
 * All nodes in the cluster are clones of each other.
 
+Technologies
+-----
+
+* Zookeeper provides leader election.
+* Leaders clean up after downed nodes. (New leaders clean up after old leaders)
+* We store mail and subscriptions in Cassandra (providing active-active datacenter support)
+* JMS provides round-robin load balancing of data processing.
+* Zookeeper provides cluster-wide mutexes.
+
 How clients subscribe
 ------
 
