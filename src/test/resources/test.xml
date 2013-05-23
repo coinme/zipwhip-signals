@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="server" class="org.apache.curator.test.TestingServer">
+        <constructor-arg index="0" value="8289"/>
+    </bean>
+
+    <import resource="datasource.xml"/>
+
+    <import resource="server.xml"/>
+
+    <!-- This is a separate bean so we can override it in tests. -->
+    <bean id="broker" class="com.zipwhip.framework.pubsub.MemoryBroker">
+        <property name="executor">
+            <!-- 10 threads -->
+            <bean class="com.zipwhip.executors.SimpleExecutor"/>
+        </property>
+    </bean>
+
+</beans>

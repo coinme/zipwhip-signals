@@ -1,0 +1,30 @@
+
+ - How to implement presence
+
+    Problem: When a server crashes, we need to clean up the presence for those that were connected.
+
+        Solution:
+            Zookeeper + Norbert (http://data.linkedin.com/opensource/norbert) is a good solution.
+            (ultimately just something that is "cluster aware" will be fine).
+
+            1. Elect a leader
+            2. Leader, on notification of being elected as the new leader, will run custom code.
+              - When the leader notices that a server went down, it will iterate through the topology for that server
+                and send disconnect signals for each client.
+
+    Problem: Connect/disconnect race condition.
+
+        a. Client connects and then disconnects from Server A.
+        c. Client connects to Server B almost instantly after disconnecting from server A.
+        b. Server A announces connection instantly, but gets bogged down and takes 10 seconds to notify the
+           cluster of disconnection.
+        d. Server B announces connection instantly.
+        e. If we had only 1 slot for "where is it connected" then we would have an error scenario where client is
+           thought to be disconnected.
+
+        Solution:
+
+            1. We do not need to process connect/disconnect events at all. A clientId can be connected to multiple servers
+               at the same time. By allowing the 1->many for clientId->server, we're eliminating these problems.
+            2. The "is connected" boolean check is simply isNullEmpty(servers).
+            3. We will need to have a strong cleanup process for servers that crash.

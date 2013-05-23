@@ -1,0 +1,5 @@
+ - Client -> Server
+ - Server -> Client(s)
+ - Channel -> Client(s)
+ - Client -> Channel(s)
+

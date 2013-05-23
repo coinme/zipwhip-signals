@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="dataSource1" class="org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy">
+        <property name="targetDataSource">
+            <bean class="com.jolbox.bonecp.BoneCPDataSource" destroy-method="close">
+                <property name="driverClass" value="com.mysql.jdbc.Driver"/>
+                <property name="jdbcUrl" value="jdbc:mysql://db.dev.zipwhip.com:3306/zw_data"/>
+                <property name="username" value="root"/>
+                <property name="password" value="password"/>
+
+                <property name="connectionTestStatement" value="/* PING */SELECT 1;"/>
+                <property name="idleConnectionTestPeriodInMinutes" value="${mysql.idleConnectionTestPeriodInMinutes}"/>
+                <property name="idleMaxAgeInMinutes" value="${mysql.idleMaxAgeInMinutes}"/>
+                <property name="maxConnectionsPerPartition" value="${mysql.maxConnectionsPerPartition}"/>
+                <property name="minConnectionsPerPartition" value="${mysql.minConnectionsPerPartition}"/>
+
+                <property name="partitionCount" value="${mysql.partitionCount}"/>
+                <property name="acquireIncrement" value="${mysql.acquireIncrement}"/>
+                <property name="statementsCacheSize" value="${mysql.statementsCacheSize}"/>
+                <property name="releaseHelperThreads" value="${mysql.releaseHelperThreads}"/>
+
+                <property name="driverProperties">
+                    <props>
+                        <prop key="useConfigs">${mysql.useConfigs}</prop>
+                        <prop key="prepStmtCacheSize">${mysql.prepStmtCacheSize}</prop>
+                        <prop key="prepStmtCacheSqlLimit">${mysql.prepStmtCacheSqlLimit}</prop>
+                        <prop key="jdbcComplicantTruncation">${mysql.jdbcComplicantTruncation}</prop>
+                        <prop key="useLocalSessionState">${mysql.useLocalSessionState}</prop>
+                        <prop key="useLocalTransactionState">${mysql.useLocalTransactionState}</prop>
+                        <prop key="maintainTimeStats">${mysql.maintainTimeStats}</prop>
+                    </props>
+                </property>
+
+                <property name="statisticsEnabled" value="${mysql.statisticsEnabled}"/>
+                <property name="defaultReadOnly" value="${mysql.defaultReadOnly}"/>
+            </bean>
+        </property>
+    </bean>
+
+</beans>

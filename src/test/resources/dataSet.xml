@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<keyspace xmlns="http://xml.dataset.cassandraunit.org">
+    <name>SignalMailbox</name>
+    <columnFamilies>
+        <columnFamily>
+            <name>MailVersions</name>
+        </columnFamily>
+        <columnFamily>
+            <name>Mail</name>
+        </columnFamily>
+        <columnFamily>
+            <name>Topology</name>
+        </columnFamily>
+    </columnFamilies>
+</keyspace>

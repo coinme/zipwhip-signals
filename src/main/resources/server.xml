@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <context:annotation-config/>
+
+    <bean class="com.zipwhip.framework.SpringApplication">
+        <property name="configuration">
+            <bean class="com.zipwhip.signals.SignalServerConfiguration">
+                <property name="serverAddress" ref="serverAddress"/>
+            </bean>
+        </property>
+        <property name="broker" ref="broker"/>
+        <property name="plugins">
+            <list>
+
+                <!--
+                    Listens to local connection changes and determines if it warrants public notification.
+                    Is cluster-wide thread-safe.
+
+                    @subscribe /sockets/connection/changed
+                    @publish /client/connected              (AtomicEvent<ClientAddress>)
+                    @publish /client/disconnected           (AtomicEvent<ClientAddress>)
+                -->
+                <bean class="com.zipwhip.signals.features.ClientConnectionChangedFeature"/>
+
+                <!--
+                    Transfers tokens from other servers.
+                     @subscribe /server/transfer/{name}
+                     @publish   /sockets/send               (Message)
+                -->
+                <bean class="com.zipwhip.signals.features.ServerTransferFeature"/>
+
+                <!--
+                    Enqueue work from outside. Add to mailbox. Transmit to consumers. Should be the main backend
+                    entry point for sending messages. This is the only way to get mailbox support for messages.
+
+                     @subscribe /server/message/enqueue     (Collection<Message>)
+                -->
+                <bean class="com.zipwhip.signals.features.ServerEnqueueFeature"/>
+
+                <!--
+                    Speaks Socket.IO to clients and announces socket related events.
+
+                     @publish /sockets/connection/changed   (clientId)
+                -->
+                <bean class="com.zipwhip.signals.features.SocketIoFeature">
+                    <property name="socketIOServer">
+                        <bean class="com.corundumstudio.socketio.SocketIOServer">
+                            <constructor-arg>
+                                <bean class="com.corundumstudio.socketio.Configuration">
+                                    <!-- TODO: figure out some SocketIO stuff to configure -->
+
+                                    <property name="port" value="23123"/>
+                                    <property name="hostname" value="localhost"/>
+                                </bean>
+                            </constructor-arg>
+                        </bean>
+                    </property>
+                </bean>
+            </list>
+        </property>
+    </bean>
+
+    <!-- This is a separate bean so we can override it in tests. -->
+    <bean id="broker" class="com.zipwhip.framework.pubsub.MemoryBroker">
+        <property name="executor">
+            <bean class="java.util.concurrent.Executors" factory-method="newFixedThreadPool">
+                <!-- 10 threads -->
+                <constructor-arg value="10"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="astyanaxContext" class="com.zipwhip.signals.mailbox.AstyanaxFactory" factory-method="createContext"/>
+
+    <bean id="cassandraKeyspace" class="com.zipwhip.signals.mailbox.AstyanaxFactory" factory-method="createKeyspace">
+        <constructor-arg ref="astyanaxContext"/>
+    </bean>
+
+    <bean id="mailbox" class="com.zipwhip.signals.mailbox.CassandraMailbox">
+        <constructor-arg index="0" ref="curatorFramework"/>
+        <constructor-arg index="1" ref="cassandraKeyspace"/>
+    </bean>
+
+    <bean id="topology" class="com.zipwhip.signals.CassandraTopology">
+        <constructor-arg index="0" ref="cassandraKeyspace"/>
+    </bean>
+
+    <!--</bean><bean id="topology" class="com.zipwhip.signals.RedisTopology">-->
+        <!--<property name="jedisPool">-->
+            <!--<bean class="redis.clients.jedis.JedisPool">-->
+                <!--<constructor-arg index="0" type="java.lang.String" value="localhost"/>-->
+                <!--<constructor-arg index="1" type="int" value="6379"/>-->
+            <!--</bean>-->
+        <!--</property>-->
+    <!--</bean>-->
+
+    <bean id="network" class="com.zipwhip.signals.ConnectionManagerImpl">
+        <property name="topology" ref="topology"/>
+        <property name="broker" ref="broker"/>
+        <property name="clientRegistry" ref="registry"/>
+        <property name="simpleQueueSender" ref="simpleQueueSender"/>
+    </bean>
+
+    <bean id="simpleQueueSender" class="com.zipwhip.jms.MockSimpleQueueSender"/>
+
+    <bean id="registry" class="com.zipwhip.signals.MockClientRegistry"/>
+
+
+    <bean id="serverAddress" class="com.zipwhip.signals.address.ServerAddress">
+        <property name="name" value="johnny-five"/>
+    </bean>
+
+    <!-- This is our access to Zookeeper -->
+    <bean id="curatorFramework" class="com.zipwhip.signals.discovery.SignalServerCuratorFactoryBean" factory-method="create">
+        <constructor-arg value="localhost:8289"/>
+    </bean>
+
+    <!-- This is how we keep track of global ordering of events -->
+    <bean id="atomicCounter" class="com.zipwhip.framework.CuratorAtomicCounter">
+        <constructor-arg index="0" ref="curatorFramework"/>
+        <constructor-arg index="1" value="server-ticks"/>
+    </bean>
+
+    <bean id="atomicEventProvider" class="com.zipwhip.signals.AtomicEventProvider">
+        <property name="atomicCounter" ref="atomicCounter"/>
+    </bean>
+
+    <!-- This is how we keep track of what servers are online/active -->
+    <bean id="clusterDiscoveryService" class="com.zipwhip.signals.discovery.ClusterDiscoveryService">
+        <constructor-arg index="0" ref="curatorFramework"/>
+        <constructor-arg index="1" ref="serverAddress"/>
+        <constructor-arg index="2" value="80"/>
+    </bean>
+
+</beans>
