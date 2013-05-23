@@ -13,6 +13,7 @@ What it does
 * Messages are persistent and so clients can connect up to 30 days later to get messages.
 * Messaging is one-way (towards clients only). Similar to distributed pub-sub in nature.
 * Your central infrastructure is separate from this server and injects messages via JMS.
+* It is active-active datacenter.
 
 How you use it
 ------
@@ -20,7 +21,6 @@ How you use it
 Your central infrastructure -> JMS -> zipwhip-services -> connected client(s)
 
 ```java
-
 /**
  * Send an arbitrary payload to a channel. All clients subscribed to this channel will receive it.
  *
