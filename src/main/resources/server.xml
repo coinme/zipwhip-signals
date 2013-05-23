@@ -18,6 +18,13 @@
             <list>
 
                 <!--
+                    Clients to subscribe to the topology.
+
+                    @subscribe /server/subscribe
+                -->
+                <bean class="com.zipwhip.signals.features.ServerSubscribeFeature"/>
+
+                <!--
                     Listens to local connection changes and determines if it warrants public notification.
                     Is cluster-wide thread-safe.
 
