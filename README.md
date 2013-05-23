@@ -71,7 +71,7 @@ public interface Topology {
 Routing decisions
 ------
 
-This code is running on all nodes of your server. Each server is aware of the full **Topology**
+This code is running on all nodes of your server. Each server is aware of the full **Topology**. The **Network** is responsible for figuring out how to send messages to various types of **Address**.
 
 ```java
 public class ServerEnqueueFeature extends Feature {
