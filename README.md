@@ -58,11 +58,11 @@ Topology
  */
 public interface Topology {
 
-    ObservableFuture<Set<Address>> get(Address client);
+    ObservableFuture<Set<Address>> get(Address address);
 
-    ObservableFuture<Void> add(Address client, Address server);
+    ObservableFuture<Void> add(Address address, Address address);
 
-    ObservableFuture<Void> remove(Address client, Address server);
+    ObservableFuture<Void> remove(Address address, Address address);
 
 }
 
