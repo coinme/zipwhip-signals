@@ -62,6 +62,9 @@ public class ServerEnqueueFeature extends Feature {
       return;
     }
     
+    // This might be a 1-many connection. 
+    // It could be a locally connected client.
+    // It could be a client on another server.
     connection.send(new DeliveredMessage(message, version));
   }
 }
