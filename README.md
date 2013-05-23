@@ -37,10 +37,41 @@ public void send(String channel, Object payload) {
 }
 ```
 
+Topology 
+------
+
+```java
+/**
+ * A global map of Address to Address subscriptions. For example, a ClientAddress can bind into a ChannelAddress. This
+ * means that whenever a message is sent to the ChannelAddress, the ClientAddress will receive a copy.
+ *
+ * Here are the common use-cases:
+ *   Client -> Server
+ *   Server -> Client(s)
+ *   Channel -> Client(s)
+ *   Client -> Channel(s)
+ *
+ * Implementations must be 100% cluster-atomic. 
+ * 
+ * @author Michael
+ * @version 1
+ */
+public interface Topology {
+
+    ObservableFuture<Set<Address>> get(Address client);
+
+    ObservableFuture<Void> add(Address client, Address server);
+
+    ObservableFuture<Void> remove(Address client, Address server);
+
+}
+
+```
+
 Routing decisions
 ------
 
-When your central server (Something
+This code is running on all nodes of your server. Each server is aware of the full **Topology**
 
 ```java
 public class ServerEnqueueFeature extends Feature {
@@ -58,7 +89,7 @@ public class ServerEnqueueFeature extends Feature {
     Connection connection = network.get(message.getAddress());
     
     if (connection == null) {
-      // There are no active connections that care about this.
+      // There are no active connections that care about this in the entire cluster.    
       return;
     }
     
