@@ -27,6 +27,8 @@ public interface Topology {
 
     ObservableFuture<Void> add(Address client, Address server);
 
+    ObservableFuture<Void> add(Address client, Set<Address> servers);
+
     ObservableFuture<Void> remove(Address client, Address server);
 
 }

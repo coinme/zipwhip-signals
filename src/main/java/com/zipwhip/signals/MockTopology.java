@@ -1,5 +1,6 @@
 package com.zipwhip.signals;
 
+import com.zipwhip.concurrent.FakeFailingObservableFuture;
 import com.zipwhip.concurrent.FakeObservableFuture;
 import com.zipwhip.concurrent.ObservableFuture;
 import com.zipwhip.signals.address.Address;
@@ -28,6 +29,19 @@ public class MockTopology implements Topology {
     @Override
     public ObservableFuture<Void> add(Address client, Address server) {
         directory.add(client, server);
+
+        return new FakeObservableFuture<Void>(this, null);
+    }
+
+    @Override
+    public ObservableFuture<Void> add(Address client, Set<Address> servers) {
+        for (Address server : servers) {
+            try {
+                add(client, server).await();
+            } catch (InterruptedException e) {
+                return new FakeFailingObservableFuture<Void>(this, e);
+            }
+        }
 
         return new FakeObservableFuture<Void>(this, null);
     }

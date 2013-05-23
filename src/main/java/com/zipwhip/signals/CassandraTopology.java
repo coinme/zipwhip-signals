@@ -16,6 +16,7 @@ import com.netflix.astyanax.retry.RetryPolicy;
 import com.netflix.astyanax.serializers.StringSerializer;
 import com.zipwhip.concurrent.DefaultObservableFuture;
 import com.zipwhip.concurrent.ObservableFuture;
+import com.zipwhip.events.Observer;
 import com.zipwhip.executors.SimpleExecutor;
 import com.zipwhip.signals.address.Address;
 import com.zipwhip.signals.address.AddressPersister;
@@ -25,6 +26,8 @@ import com.zipwhip.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Executor;
@@ -55,6 +58,39 @@ public class CassandraTopology implements Topology {
 
     public CassandraTopology(Keyspace keyspace) {
         this.keyspace = keyspace;
+    }
+
+    @Override
+    public ObservableFuture<Void> add(Address client, Set<Address> servers) {
+        final ObservableFuture<Void> future = new DefaultObservableFuture<Void>(this, executor);
+        final int[] count = { servers.size() };
+
+        for (Address server : servers) {
+            ObservableFuture<Void> f = add(client, server);
+
+            f.addObserver(new Observer<ObservableFuture<Void>>() {
+                @Override
+                public void notify(Object sender, ObservableFuture<Void> item) {
+                    if (item.isCancelled()) {
+                        future.cancel();
+                        return;
+                    } else if (item.isFailed()) {
+                        future.setFailure(item.getCause());
+                        return;
+                    }
+
+                    synchronized (this) {
+                        count[0]--;
+                    }
+
+                    if (count[0] == 0){
+                        future.setSuccess(null);
+                    }
+                }
+            });
+        }
+
+        return future;
     }
 
     @Override
