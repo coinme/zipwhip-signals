@@ -14,6 +14,38 @@ What it does
 * Messaging is one-way (towards clients only). Similar to distributed pub-sub in nature.
 * Your central infrastructure is separate from this server and injects messages via JMS.
 * It is active-active datacenter.
+* All nodes in the cluster are clones of each other.
+
+How clients subscribe
+------
+
+* Client connects and gets a **clientId** from **Socket.IO**
+* Client makes HTTP POST to your central server. We use **/signals/connect**
+* Your central server sends a command to **zipwhip-signals** via the JMS Queue **/server/connect**
+
+```java
+  public class SubscriptionFeature extends Feature {
+    
+    @Autowired
+    Topology topology;
+    
+    @Subscribe(uri = "/server/connect", converter = "SubscribeConverter")
+    public void process(Address client, Set<Address> addresses) throws Exception {
+      
+      ObservableFuture<Void> future = topology.add(client, addresses);
+      
+      // Because we're in the pubsub thread (usually a JMS consumer). We don't want to overwhelm
+      // our JVM memory with pending requests. We need to block.
+      
+      // By blocking here, we're pooling waiting requests in JMS rather than in our local JVM.
+      
+      if (!future.await(5, TimeUnit.SECONDS)) {
+        throw new Exception("Future did not complete within 5 seconds. Is our topology down?");
+      }    
+    }
+  }
+```
+
 
 How you use it
 ------
@@ -72,7 +104,7 @@ public interface Topology {
 Routing decisions
 ------
 
-This code is running on all nodes of your server. Each server is aware of the full **Topology**. The **Network** is responsible for figuring out how to send messages to various types of **Address**.
+This code is running on all nodes of the cluster. Each server is aware of the full **Topology**. The **Network** is responsible for figuring out how to send messages to various types of **Address**.
 
 ```java
 public class ServerEnqueueFeature extends Feature {
