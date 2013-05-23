@@ -114,7 +114,7 @@ public interface Topology {
 Routing decisions
 ------
 
-This code is running on all nodes of the cluster. Each server is aware of the full **Topology**. The **Network** is responsible for figuring out how to send messages to various types of **Address**.
+This code is running on all nodes of the cluster. Each server is aware of the full **Topology**. The **ConnectionManager** is responsible for figuring out how to send messages to various types of **Address**.
 
 ```java
 public class ServerEnqueueFeature extends Feature {
@@ -123,13 +123,13 @@ public class ServerEnqueueFeature extends Feature {
   Network network;
   
   @Autowired
-  Mailbox mailbox;
+  ConnectionManager connectionManager;
   
   @Subscribe(uri = "/server/enqueue", converter = "MessageConverter")
   public void process(Message message) {
     long version = mailbox.append(message);
     
-    Connection connection = network.get(message.getAddress());
+    Connection connection = connectionManager.get(message.getAddress());
     
     if (connection == null) {
       // There are no active connections that care about this in the entire cluster.    
